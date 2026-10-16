@@ -8,6 +8,9 @@ export interface MermaidThemeConfig {
   readonly look?: 'classic' | 'handDrawn';
 }
 
+/** SVG post-processing a theme needs beyond Mermaid config. */
+export type ThemeEnhancement = 'editorial-focus' | 'sketch';
+
 export interface Theme {
   readonly id: string;
   readonly name: string;
@@ -19,6 +22,7 @@ export interface Theme {
   readonly dark: boolean;
   readonly padding: number;
   readonly mermaid: MermaidThemeConfig;
+  readonly enhancement?: ThemeEnhancement;
   /** Keys copied into the shareable init directive. */
   readonly directiveKeys: readonly string[];
 }
@@ -240,6 +244,7 @@ export const THEMES: readonly Theme[] = [
     dark: false,
     padding: 40,
     directiveKeys: BASE_KEYS,
+    enhancement: 'editorial-focus',
     mermaid: {
       theme: 'base',
       themeVariables: variables({
@@ -274,6 +279,7 @@ export const THEMES: readonly Theme[] = [
     dark: false,
     padding: 32,
     directiveKeys: BASE_KEYS,
+    enhancement: 'sketch',
     mermaid: {
       theme: 'base',
       look: 'handDrawn',
@@ -298,7 +304,10 @@ export const THEMES: readonly Theme[] = [
       themeCSS: `.node rect, .node path { stroke-width: 1.8px; }
         .arrow { stroke: #2B2F36 !important; stroke-width: 2.4px !important; }
         .commit { stroke: #1F2937 !important; stroke-width: 2px !important; }
-        .branch-label rect, .branchLabelBkg { stroke: #1F2937 !important; stroke-width: 2px !important; }`,
+        .branch-label rect, .branchLabelBkg { stroke: #1F2937 !important; stroke-width: 2px !important; }
+        .commit-label, .tag-label, .branch-label, .branchLabel text, .legend text, .slice, .pieTitleText { font-family: 'Patrick Hand', cursive !important; }
+        .commit-label, .tag-label { fill: #1F2937 !important; font-size: 13px; }
+        .branch-label, .branchLabel text { font-size: 17px; }`,
     },
   },
   {

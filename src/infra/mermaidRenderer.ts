@@ -1,5 +1,6 @@
 import mermaid, { type MermaidConfig } from 'mermaid';
 import type { Theme } from '../domain/themes';
+import { enhanceSvg } from './enhance';
 
 export type RenderResult = { readonly ok: true; readonly svg: string } | { readonly ok: false; readonly error: string };
 
@@ -33,7 +34,7 @@ const renderNow = async (code: string, theme: Theme): Promise<RenderResult> => {
   mermaid.initialize(configFor(theme));
   try {
     const { svg } = await mermaid.render(id, code);
-    return { ok: true, svg };
+    return { ok: true, svg: await enhanceSvg(svg, code, theme) };
   } catch (error) {
     document.getElementById(id)?.remove();
     document.getElementById(`d${id}`)?.remove();
