@@ -1,6 +1,7 @@
 import mermaid, { type MermaidConfig } from 'mermaid';
 import type { Theme } from '../domain/themes';
 import { enhanceSvg } from './enhance';
+import { themeFontsReady } from './fonts';
 
 export type RenderResult = { readonly ok: true; readonly svg: string } | { readonly ok: false; readonly error: string };
 
@@ -31,6 +32,7 @@ const errorMessage = (error: unknown): string => {
 
 const renderNow = async (code: string, theme: Theme): Promise<RenderResult> => {
   const id = `mr-${Date.now().toString(36)}-${++counter}`;
+  await themeFontsReady(theme, code);
   mermaid.initialize(configFor(theme));
   try {
     const { svg } = await mermaid.render(id, code);

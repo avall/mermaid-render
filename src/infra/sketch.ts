@@ -4,6 +4,7 @@ import { needsSketch, roundedRectPath, sketchSeed, stickyFill } from '../domain/
 
 const INK = '#2B2F36';
 const STICKY = ['#FDE68A', '#BBF7D0', '#BFDBFE', '#FBCFE8'] as const;
+const MERGE_DOTS = ['#FBCFE8', '#BBF7D0', '#FEF3C7', '#BFDBFE'] as const;
 const BASE: Options = { roughness: 1.3, bowing: 1.1, stroke: INK, strokeWidth: 1.8, fillStyle: 'solid' };
 
 type RoughSvg = ReturnType<typeof rough.svg>;
@@ -28,13 +29,16 @@ const box = (rc: RoughSvg, el: Element, options: Options, radius: number): SVGGE
 const RULES: readonly (readonly [string, Redraw])[] = [
   ['line.branch', (rc, el, o) => rc.line(num(el, 'x1'), num(el, 'y1'), num(el, 'x2'), num(el, 'y2'), { ...o, strokeWidth: 2.2 })],
   ['path.arrow', (rc, el, o) => rc.path(el.getAttribute('d') ?? '', { ...o, strokeWidth: 2.2 })],
-  ['circle.commit', (rc, el, o) => rc.circle(num(el, 'cx'), num(el, 'cy'), num(el, 'r') * 2, { ...o, fill: fillOf(el) })],
+  ['circle.commit:not(.commit-merge)', (rc, el, o) => rc.circle(num(el, 'cx'), num(el, 'cy'), num(el, 'r') * 2, { ...o, fill: fillOf(el) })],
   ['rect.branchLabelBkg', (rc, el, o) => box(rc, el, { ...o, fill: fillOf(el), strokeWidth: 2 }, 6)],
   ['rect.commit-label-bkg', (rc, el, o, i) => box(rc, el, { ...o, fill: stickyFill(i, STICKY), strokeWidth: 1.3 }, 2)],
   ['polygon.tag-label-bkg', (rc, el, o) => rc.polygon(points(el), { ...o, fill: '#FDE68A', strokeWidth: 1.4 })],
   ['path.pieCircle', (rc, el, o) => rc.path(el.getAttribute('d') ?? '', { ...o, fill: el.getAttribute('fill') ?? fillOf(el), strokeWidth: 1.6 })],
   ['circle.pieOuterCircle', (rc, el, o) => rc.circle(num(el, 'cx'), num(el, 'cy'), num(el, 'r') * 2, { ...o, strokeWidth: 2.2 })],
   ['g.legend > rect', (rc, el, o) => box(rc, el, { ...o, fill: fillOf(el), strokeWidth: 1.4 }, 3)],
+  // Merge dot: one clean pastel dot inside the commit ring, as on a whiteboard.
+  ['circle.commit-merge', (rc, el, o, i) =>
+    rc.circle(num(el, 'cx'), num(el, 'cy'), num(el, 'r') * 2, { ...o, fill: stickyFill(i, MERGE_DOTS), roughness: 0.4, strokeWidth: 1.3, disableMultiStroke: true })],
 ];
 
 /** Whiteboard Sketch for diagrams that ignore `look: handDrawn`: redraws geometry with rough.js. */

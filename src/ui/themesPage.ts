@@ -14,6 +14,12 @@ const STYLING_SAMPLE = `%%{init: {"theme": "base", "themeVariables": {
 flowchart LR
   A[Write] --> B[Preview] --> C[Export]`;
 
+const FOCAL_SAMPLE = `flowchart LR
+  %% focal: orders
+  client[Client] --> api[API Gateway]
+  api --> auth[Auth]
+  api --> orders[Orders]`;
+
 const FAQ: ReadonlyArray<readonly [string, string]> = [
   [
     'How do I change the theme in the Mermaid live editor?',
@@ -99,6 +105,9 @@ const pageHtml = (): string => {
       <h2 style="font-size:28px">Styling Mermaid yourself</h2>
       <p class="sub">Every preset here is a set of Mermaid <span class="inline-code">themeVariables</span>. If you would rather keep the styling in your own file, put an init directive on the first line — it travels with the diagram, so GitHub and your docs site render it the same way.</p>
       <pre class="code-block">${escapeHtml(STYLING_SAMPLE)}</pre>
+      <h3 id="editorial-focal" style="margin-top:28px">Choosing the Editorial focal node</h3>
+      <p class="sub">On flowcharts, Editorial accents one node and draws the path into it in orange. By default that is the first node that branches into two or more edges, walking from the diagram's root. To pick another node, add a <span class="inline-code">%% focal: &lt;id&gt;</span> comment, or tag it with <span class="inline-code">class &lt;id&gt; focal</span> — the comment wins when both are present.</p>
+      <pre class="code-block">${escapeHtml(FOCAL_SAMPLE)}</pre>
       <div class="grid-3" style="margin-top:0">
         <div class="mini-card"><h3>Why the defaults look busy</h3><p>Mermaid ships a multi-hue palette so every node type is distinguishable in a preview pane. On a page it competes with your text: several saturated fills, thick strokes and a colour per shape.</p></div>
         <div class="mini-card"><h3>What these presets change</h3><p>One accent at most, hairline borders instead of heavy strokes, and a type ramp where labels and edge captions differ in size and weight rather than colour.</p></div>
@@ -113,7 +122,7 @@ const pageHtml = (): string => {
       <h2 style="font-size:28px">Which style for which destination</h2>
       <div class="grid-3">
         <div class="mini-card"><h3>Docs, wikis and README files</h3><p>Clean Docs or GitHub README, when the diagram should disappear into the page around it.</p></div>
-        <div class="mini-card"><h3>A blog post or a slide</h3><p>Editorial. It accents the node your diagram is about and drops everything else to ink and hairlines — the difference between a diagram and a figure.</p></div>
+        <div class="mini-card"><h3>A blog post or a slide</h3><p>Editorial. It accents the node your diagram is about and drops everything else to ink and hairlines — the difference between a diagram and a figure. Pick that node yourself with <span class="inline-code">%% focal: &lt;id&gt;</span>.</p></div>
         <div class="mini-card"><h3>Workshops and architecture notes</h3><p>Whiteboard Sketch, when the diagram is part of a story rather than a spec.</p></div>
         <div class="mini-card"><h3>Dark documentation</h3><p>GitHub Dark when the page already looks like GitHub in dark mode. Aurora Noir for a mint glow on obsidian, or Blueprint for engineering blue with cyan connectors.</p></div>
         <div class="mini-card"><h3>Any background at all</h3><p>Turn on Transparent background with any style. It drops the canvas and keeps the style, so use a light style on light slides and a dark one, such as GitHub Dark, on dark slides.</p></div>

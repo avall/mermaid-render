@@ -1,6 +1,7 @@
 import { type ExportFormat, type Size, formatInfo, scaledSize, supportsTransparency } from '../domain/export';
 import type { Theme } from '../domain/themes';
-import { BUNDLED_FAMILIES, fontFaceCss } from './fonts';
+import { subsetsFor } from '../domain/fontSubsets';
+import { fontFaceCss, themeFamilies } from './fonts';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 export interface PreparedSvg {
@@ -36,10 +37,8 @@ export const exportSize = (svg: string, theme: Theme): Size => {
   return { width: Math.ceil(w + theme.padding * 2), height: Math.ceil(h + theme.padding * 2) };
 };
 
-const usedFamilies = (theme: Theme): string[] => {
-  const source = `${String(theme.mermaid.themeVariables['fontFamily'])} ${theme.mermaid.themeCSS ?? ''}`;
-  return BUNDLED_FAMILIES.filter((family) => source.includes(family));
-};
+const labelText = (root: SVGSVGElement): string =>
+  Array.from(root.querySelectorAll('text, foreignObject'), (el) => el.textContent ?? '').join('');
 
 const toDataUrl = (blob: Blob): Promise<string> =>
   new Promise((resolve, reject) => {
@@ -59,7 +58,7 @@ export const prepareSvg = async (svg: string, theme: Theme, transparent: boolean
   root.setAttribute('width', String(size.width));
   root.setAttribute('height', String(size.height));
   root.removeAttribute('style');
-  const fonts = fontFaceCss(usedFamilies(theme));
+  const fonts = fontFaceCss(themeFamilies(theme), subsetsFor(labelText(root)));
   if (fonts) {
     const style = root.ownerDocument.createElementNS(SVG_NS, 'style');
     style.textContent = fonts;
