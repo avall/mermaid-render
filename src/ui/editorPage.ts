@@ -11,7 +11,8 @@ import {
 import { editorHash, parseRoute, THEMES_HASH } from '../domain/route';
 import { DEFAULT_CODE, TEMPLATES } from '../domain/samples';
 import { THEMES, type Theme, type ThemeTier, findTheme } from '../domain/themes';
-import { exportDiagram, exportSize, prepareSvg } from '../infra/exporter';
+import { COPY_IMAGE_SUCCESS, copyImageErrorMessage, imageCopySupport } from '../domain/clipboard';
+import { exportBlob, exportDiagram, exportSize, prepareSvg } from '../infra/exporter';
 import { renderDiagram } from '../infra/mermaidRenderer';
 import { $, $$, copyText, debounce, escapeHtml } from './dom';
 import { highlightMermaid } from './highlight';
@@ -131,7 +132,10 @@ const toolHtml = (): string => `
       <div class="seg seg-2" id="formats">
         ${EXPORT_FORMATS.map((f) => `<button class="seg-btn center" type="button" data-format="${f}">${f === 'webp' ? 'WebP' : f.toUpperCase()}</button>`).join('')}
       </div>
-      <button class="btn btn-primary download-btn" type="button" id="download">Download PNG</button>
+      <div class="download-row">
+        <button class="btn btn-primary download-btn" type="button" id="download">Download PNG</button>
+        <button class="btn copy-image-btn download-btn" type="button" id="copy-image" title="Copy a PNG with the current style, scale and background">Copy image</button>
+      </div>
       <div class="seg seg-2">
         <button class="seg-btn center" type="button" id="copy-svg">Copy SVG</button>
         <button class="seg-btn center" type="button" id="copy-code">Copy code</button>
@@ -374,6 +378,28 @@ export const mountEditorPage = (): void => {
     } finally {
       button.disabled = false;
     }
+  });
+  const copyImageButton = $<HTMLButtonElement>('#copy-image');
+  const copySupport = imageCopySupport({
+    secureContext: window.isSecureContext,
+    clipboardWrite: typeof navigator.clipboard?.write === 'function',
+    clipboardItem: typeof ClipboardItem === 'function',
+  });
+  if (!copySupport.supported) {
+    copyImageButton.setAttribute('aria-disabled', 'true');
+    copyImageButton.title = copySupport.message;
+  }
+  copyImageButton.addEventListener('click', () => {
+    if (!copySupport.supported) return setStatus(copySupport.message);
+    if (!state.svg) return setStatus('Fix the diagram before copying.');
+    setStatus('Preparing image…');
+    const request = { svg: state.svg, theme: state.theme, format: 'png', scale: effectiveScale(), transparent: state.transparent, filename: '' } as const;
+    // Safari keeps the user gesture only when the ClipboardItem is built synchronously with a pending blob.
+    const item = new ClipboardItem({ 'image/png': exportBlob(request) });
+    navigator.clipboard.write([item]).then(
+      () => setStatus(COPY_IMAGE_SUCCESS),
+      (error: unknown) => setStatus(copyImageErrorMessage(error)),
+    );
   });
   $('#copy-svg').addEventListener('click', async () => {
     if (!state.svg) return setStatus('Nothing to copy yet.');
