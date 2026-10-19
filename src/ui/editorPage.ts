@@ -201,6 +201,34 @@ export const mountEditorPage = (): void => {
   const status = $('#status');
   let renderToken = 0;
 
+  /** Shows the grab cursor only when the zoomed preview overflows its frame. */
+  const syncPannable = (): void => {
+    frame.classList.toggle('pannable', frame.scrollWidth > frame.clientWidth || frame.scrollHeight > frame.clientHeight);
+  };
+
+  let pan: { x: number; y: number; left: number; top: number } | null = null;
+  frame.addEventListener('pointerdown', (event) => {
+    if (event.button !== 0 || !frame.classList.contains('pannable')) return;
+    pan = { x: event.clientX, y: event.clientY, left: frame.scrollLeft, top: frame.scrollTop };
+    frame.setPointerCapture(event.pointerId);
+    frame.classList.add('panning');
+    event.preventDefault();
+  });
+  frame.addEventListener('pointermove', (event) => {
+    if (!pan) return;
+    frame.scrollLeft = pan.left - (event.clientX - pan.x);
+    frame.scrollTop = pan.top - (event.clientY - pan.y);
+  });
+  const endPan = (event: PointerEvent): void => {
+    if (!pan) return;
+    pan = null;
+    frame.classList.remove('panning');
+    if (frame.hasPointerCapture(event.pointerId)) frame.releasePointerCapture(event.pointerId);
+  };
+  frame.addEventListener('pointerup', endPan);
+  frame.addEventListener('pointercancel', endPan);
+  window.addEventListener('resize', syncPannable);
+
   const setStatus = (text: string): void => {
     status.textContent = text;
   };
@@ -254,8 +282,10 @@ export const mountEditorPage = (): void => {
     $('#download').textContent = `Download ${state.format === 'webp' ? 'WebP' : state.format.toUpperCase()}`;
     frame.style.background = state.theme.background;
     frame.classList.toggle('transparent', state.transparent && alpha);
-    canvas.style.transform = `scale(${state.zoom})`;
+    canvas.style.zoom = String(state.zoom);
+    canvas.classList.toggle('zoomed', state.zoom > 1);
     $('#zoom-value').textContent = `${Math.round(state.zoom * 100)}%`;
+    syncPannable();
     syncInfo();
   };
 
@@ -267,6 +297,7 @@ export const mountEditorPage = (): void => {
       state.svg = result.svg;
       canvas.innerHTML = result.svg;
       fitNaturalWidth(canvas.querySelector('svg'));
+      syncPannable();
       canvas.classList.remove('preview-stale');
       errorBox.hidden = true;
     } else {
